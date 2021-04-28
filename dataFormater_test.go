@@ -380,7 +380,7 @@ var DataFormatterConfig string = `
     {
         "key_name": "create_date",
         "func_name": "",
-        "type": "int",
+        "type": "string",
         "args": null
     },
     {
@@ -388,6 +388,12 @@ var DataFormatterConfig string = `
         "func_name": "",
         "type": "int",
         "args": null
+    },
+    {
+        "key_name": "format_date",
+        "func_name": "dateFormat",
+        "type": "string",
+        "args": ["create_date", "Y-m-d"]
     }
 ]
 `
@@ -530,4 +536,47 @@ func TestJsonDecode(t *testing.T) {
 	tpl := map[string]interface{}{}
 	JsonDecode(data, &tpl, true)
 	t.Logf("%#+v \n", tpl)
+}
+
+func TestCat(t *testing.T) {
+	t.Log("start")
+	rd := RiskData{}
+	err := rd.LoadConfig(DataFormatterConfig)
+	if err != nil {
+		t.Error(err)
+	}
+
+	cf, ok := rd.GetConf("uid")
+	t.Log(cf, ok)
+}
+
+func TestGetData(t *testing.T) {
+	t.Log("start")
+	rd := RiskData{}
+	err := rd.LoadConfig(DataFormatterConfig)
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Logf("raw: %#+v \n", RawData)
+	err = rd.LoadData(RawData)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	k := "uid"
+	v, tp, err := rd.Get(k)
+
+	t.Logf("v: %#+v, t: %#+v, err: %#+v", v, tp, err)
+
+	v, err = rd.GetString(k)
+	t.Logf("v: %#+v, err: %#+v", v, err)
+	v, err = rd.GetInt(k)
+	t.Logf("v: %#+v, err: %#+v", v, err)
+	v, err = rd.GetKeyType(k)
+	t.Logf("v: %#+v, err: %#+v", v, err)
+
+	// t.Log(rd)
+	t.Log("end")
 }
