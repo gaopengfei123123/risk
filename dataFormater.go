@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 )
@@ -14,10 +15,10 @@ func Text() {
 }
 
 type RiskData struct {
-	rawData    rawType
-	config     sync.Map
-	intType    map[string]int
-	stringType map[string]string
+	rawData    sync.Map // interface{}
+	config     sync.Map // ConfigJsonTpl
+	intType    sync.Map // int
+	stringType sync.Map // string
 }
 
 // 原始数据类型
@@ -40,7 +41,8 @@ type ConfigJsonTpl struct {
 // LoadConfig 加载配置
 func (rd *RiskData) LoadConfig(configJson string) error {
 	cf := []ConfigJsonTpl{}
-	err := json.Unmarshal([]byte(configJson), &cf)
+	// err := json.Unmarshal([]byte(configJson), &cf)
+	err := JsonDecode(configJson, &cf, true)
 
 	if err != nil {
 		return err
@@ -77,41 +79,35 @@ func (rd *RiskData) LoadData(raw string) (err error) {
 	if err != nil {
 		return err
 	}
-	rd.rawData = make(rawType, 1)
-	// rd.rawData = tpl
 
-	// log.Printf("%#+v \n", tpl)
+	// 按字段配置将数据分配到各类型的 map 中
 	err = rd.swithcType(tpl)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 // 将传入的数据从 interface{} 转成指定类型
 // 需要函数处理的新字段不在这里处理
 func (rd *RiskData) swithcType(data map[string]interface{}) (err error) {
-	if rd.config == nil {
-		return errors.New("未加载字段配置")
-	}
 
-	rd.intType = make(map[string]int, 1)
-	rd.stringType = make(map[string]string, 1)
+	rd.config.Range(func(k, v interface{}) bool {
+		log.Println("iterate:", k, v)
+		confKey := k.(string)
+		kConfig := v.(ConfigJsonTpl)
 
-LOOP:
-	for k, kConfig := range rd.config {
 		// 配置中带 func 的稍后处置
 		if kConfig.FuncName != "" || len(kConfig.FuncName) > 0 {
-			continue LOOP
+			return true
 		}
 
-		// 通过配置判断外界传入数据是否合法, 否则给过滤掉
-		rawValue, exist := data[k]
+		// 通过配置判断外界传入数据是否允许, 非配置中的给过滤掉
+		rawValue, exist := data[confKey]
 		if !exist {
-			continue LOOP
+			return true
 		}
-		rd.rawData[k] = rawValue
+		rd.rawData.Store(confKey, rawValue)
 
 		switch kConfig.DataType {
 		case "int":
@@ -125,27 +121,25 @@ LOOP:
 				if err != nil {
 					// log.Printf("%#+v, %#+v", rawValue, kConfig)
 					// panic(err)
-					return
+					return true
 				}
 			}
-			rd.intType[k] = intValue
+			rd.intType.Store(confKey, intValue)
 			break
 		case "string":
 			strValue, ok := rawValue.(string)
 			if ok {
-				rd.stringType[k] = strValue
+				rd.stringType.Store(confKey, strValue)
 			}
-			break
-		default:
-			continue LOOP
 		}
-	}
+		return true
+	})
 
 	return
 }
 
 func (rd *RiskData) Get(key string) (value interface{}, valueType string, err error) {
-	value, ok := rd.rawData[key]
+	value, ok := rd.rawData.Load(key)
 	if !ok {
 		err = errors.New("获取不到数据")
 		return
@@ -159,29 +153,31 @@ func (rd *RiskData) Get(key string) (value interface{}, valueType string, err er
 }
 
 func (rd *RiskData) GetString(key string) (value string, err error) {
-	value, ok := rd.stringType[key]
+	v, ok := rd.stringType.Load(key)
 	if !ok {
 		err = errors.New("获取不到 string 类型数据")
 		return
 	}
+	value = v.(string)
 	return
 }
 
 func (rd *RiskData) GetInt(key string) (value int, err error) {
-	value, ok := rd.intType[key]
+	v, ok := rd.intType.Load(key)
 	if !ok {
 		err = errors.New("获取不到 int 类型数据")
 		return
 	}
+	value = v.(int)
 	return
 }
 
 func (rd *RiskData) GetKeyType(key string) (valueType string, err error) {
-	cf, ok := rd.config[key]
+	cf, ok := rd.config.Load(key)
 	if !ok {
 		err = errors.New("获取不到类型配置")
 		return
 	}
-	valueType = cf.DataType
+	valueType = cf.(ConfigJsonTpl).DataType
 	return
 }

@@ -538,18 +538,6 @@ func TestJsonDecode(t *testing.T) {
 	t.Logf("%#+v \n", tpl)
 }
 
-func TestCat(t *testing.T) {
-	t.Log("start")
-	rd := RiskData{}
-	err := rd.LoadConfig(DataFormatterConfig)
-	if err != nil {
-		t.Error(err)
-	}
-
-	cf, ok := rd.GetConf("uid")
-	t.Log(cf, ok)
-}
-
 func TestGetData(t *testing.T) {
 	t.Log("start")
 	rd := RiskData{}
@@ -571,11 +559,11 @@ func TestGetData(t *testing.T) {
 	t.Logf("v: %#+v, t: %#+v, err: %#+v", v, tp, err)
 
 	v, err = rd.GetString(k)
-	t.Logf("v: %#+v, err: %#+v", v, err)
+	t.Logf("GetString v: %#+v, err: %#+v", v, err)
 	v, err = rd.GetInt(k)
-	t.Logf("v: %#+v, err: %#+v", v, err)
+	t.Logf("GetInt v: %#+v, err: %#+v", v, err)
 	v, err = rd.GetKeyType(k)
-	t.Logf("v: %#+v, err: %#+v", v, err)
+	t.Logf("GetKeyType v: %#+v, err: %#+v", v, err)
 
 	// t.Log(rd)
 	t.Log("end")
