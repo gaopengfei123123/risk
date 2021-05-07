@@ -1,4 +1,4 @@
-package risk
+package dataFormater
 
 import (
 	"testing"
@@ -502,7 +502,7 @@ func TestConfig(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(rd)
+	// t.Log(rd)
 	t.Log("end")
 }
 
@@ -519,7 +519,7 @@ func TestData(t *testing.T) {
 		t.Error(err)
 	}
 
-	t.Log(rd)
+	// t.Log(rd)
 	t.Log("end")
 }
 
@@ -538,20 +538,27 @@ func TestJsonDecode(t *testing.T) {
 	t.Logf("%#+v \n", tpl)
 }
 
-func TestGetData(t *testing.T) {
+// 共用的初始化方法, 省得一直重写
+func loadCommonRiskData(t *testing.T) (rd RiskData, err error) {
 	t.Log("start")
-	rd := RiskData{}
-	err := rd.LoadConfig(DataFormatterConfig)
+	rd = RiskData{}
+	err = rd.LoadConfig(DataFormatterConfig)
 	if err != nil {
 		t.Error(err)
 	}
 
-	t.Logf("raw: %#+v \n", RawData)
+	// t.Logf("raw: %#+v \n", RawData)
+
 	err = rd.LoadData(RawData)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	return
+}
+
+func TestGetData(t *testing.T) {
+	rd, _ := loadCommonRiskData(t)
 
 	k := "uid"
 	v, tp, err := rd.Get(k)
@@ -567,4 +574,52 @@ func TestGetData(t *testing.T) {
 
 	// t.Log(rd)
 	t.Log("end")
+}
+
+func TestFuncData(t *testing.T) {
+	rd, _ := loadCommonRiskData(t)
+
+	conf, _ := rd.GetConf("format_date")
+	t.Logf("conf %#+v \n", conf)
+
+	kArr := []string{"format_date", "ip3"}
+	rd.HandleFuncData(kArr)
+
+}
+
+// 性能测试
+func Benchmark_GetData(b *testing.B) {
+	rd := RiskData{}
+	err := rd.LoadConfig(DataFormatterConfig)
+	if err != nil {
+		b.Error(err)
+	}
+	err = rd.LoadData(RawData)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
+	for i := 0; i < b.N; i++ {
+		k := "uid"
+		rd.Get(k)
+	}
+}
+
+func Benchmark_GetInt(b *testing.B) {
+	rd := RiskData{}
+	err := rd.LoadConfig(DataFormatterConfig)
+	if err != nil {
+		b.Error(err)
+	}
+	err = rd.LoadData(RawData)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
+	for i := 0; i < b.N; i++ {
+		k := "uid"
+		rd.GetInt(k)
+	}
 }

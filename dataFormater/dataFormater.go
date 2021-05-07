@@ -1,4 +1,4 @@
-package risk
+package dataFormater
 
 import (
 	"bytes"
@@ -57,7 +57,9 @@ func (rd *RiskData) LoadConfig(configJson string) error {
 // 通过 key 获取配置
 func (rd *RiskData) GetConf(k string) (cf ConfigJsonTpl, ok bool) {
 	t, ok := rd.config.Load(k)
-	cf = t.(ConfigJsonTpl)
+	if ok {
+		cf = t.(ConfigJsonTpl)
+	}
 	return
 }
 
@@ -72,7 +74,7 @@ func JsonDecode(raw string, tpl interface{}, useNumber bool) error {
 	return json.Unmarshal([]byte(raw), &tpl)
 }
 
-// LoadData 加载数据
+// LoadData 加载数据, 并将数据按配置好的类型进行转换
 func (rd *RiskData) LoadData(raw string) (err error) {
 	tpl := rawType{}
 	err = JsonDecode(raw, &tpl, true)
@@ -93,7 +95,7 @@ func (rd *RiskData) LoadData(raw string) (err error) {
 func (rd *RiskData) swithcType(data map[string]interface{}) (err error) {
 
 	rd.config.Range(func(k, v interface{}) bool {
-		log.Println("iterate:", k, v)
+		// log.Println("iterate:", k, v)
 		confKey := k.(string)
 		kConfig := v.(ConfigJsonTpl)
 
@@ -138,6 +140,33 @@ func (rd *RiskData) swithcType(data map[string]interface{}) (err error) {
 	return
 }
 
+// handleFuncData 按按配置中的函数生成新字段
+func (rd *RiskData) HandleFuncData(keyArr []string) error {
+	if len(keyArr) == 0 {
+		return nil
+	}
+
+	for _, v := range keyArr {
+		conf, ok := rd.GetConf(v)
+		log.Printf("k: %s, ok: %v, v: %#+v \n", v, ok, conf)
+		if !ok {
+			continue
+		}
+		err := rd.handleDataByConf(conf)
+		if err != nil {
+			// utils.dd(err)
+		}
+	}
+	return nil
+}
+
+// 将数据按配置内容进行处理
+func (rd *RiskData) handleDataByConf(conf ConfigJsonTpl) error {
+
+	return nil
+}
+
+// Get 获取原始数据以及类型
 func (rd *RiskData) Get(key string) (value interface{}, valueType string, err error) {
 	value, ok := rd.rawData.Load(key)
 	if !ok {

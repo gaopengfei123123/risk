@@ -1,4 +1,4 @@
-package risk
+package utils
 
 import (
 	"log"
