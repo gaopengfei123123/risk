@@ -393,7 +393,7 @@ var DataFormatterConfig string = `
         "key_name": "format_date",
         "func_name": "dateFormat",
         "type": "string",
-        "args": ["create_date", "Y-m-d"]
+        "args": ["create_date", "2006-01-02"]
     }
 ]
 `
@@ -579,11 +579,18 @@ func TestGetData(t *testing.T) {
 func TestFuncData(t *testing.T) {
 	rd, _ := loadCommonRiskData(t)
 
-	conf, _ := rd.GetConf("format_date")
+	k := "format_date"
+	conf, _ := rd.GetConf(k)
 	t.Logf("conf %#+v \n", conf)
+	err := rd.handleDataByConf(conf)
+	if err != nil {
+		t.Error("handleDataByConf err:", err)
+	}
 
-	kArr := []string{"format_date", "ip3"}
-	rd.HandleFuncData(kArr)
+	v, tp, err := rd.Get(k)
+	t.Logf("k:%s, v:%#+v, t:%#+v, err:%#+v", k, v, tp, err)
+	// kArr := []string{"format_date", "ip3"}
+	// rd.HandleFuncData(kArr)
 
 }
 

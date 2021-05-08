@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"strconv"
 	"sync"
 )
@@ -162,6 +163,24 @@ func (rd *RiskData) HandleFuncData(keyArr []string) error {
 
 // 将数据按配置内容进行处理
 func (rd *RiskData) handleDataByConf(conf ConfigJsonTpl) error {
+	fn, err := GetFuncByName(conf.FuncName)
+	if err != nil {
+		return err
+	}
+
+	res, _, err := fn(rd, conf.Args...)
+	if err != nil {
+		return err
+	}
+
+	rd.rawData.Store(conf.KeyName, res)
+	tp := reflect.TypeOf(res)
+	switch tp.Kind() {
+	case reflect.Int:
+		rd.intType.Store(conf.KeyName, res)
+	case reflect.String:
+		rd.stringType.Store(conf.KeyName, res)
+	}
 
 	return nil
 }
