@@ -112,6 +112,8 @@ func (rd *RiskData) swithcType(data map[string]interface{}) (err error) {
 		}
 		rd.rawData.Store(confKey, rawValue)
 
+		// log.Printf("raw: %#+v, %#+v", rawValue, confKey)
+
 		switch kConfig.DataType {
 		case "int":
 			str, ok := rawValue.(string)
@@ -172,15 +174,21 @@ func (rd *RiskData) handleDataByConf(conf ConfigJsonTpl) error {
 	if err != nil {
 		return err
 	}
+	if res == nil {
+		return nil
+	}
 
-	rd.rawData.Store(conf.KeyName, res)
 	tp := reflect.TypeOf(res)
 	switch tp.Kind() {
 	case reflect.Int:
 		rd.intType.Store(conf.KeyName, res)
 	case reflect.String:
 		rd.stringType.Store(conf.KeyName, res)
+	default:
+		return nil
 	}
+
+	rd.rawData.Store(conf.KeyName, res)
 
 	return nil
 }

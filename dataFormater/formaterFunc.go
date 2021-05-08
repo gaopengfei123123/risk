@@ -9,8 +9,10 @@ package dataFormater
 */
 
 import (
+	"bytes"
 	"errors"
 	"log"
+	"risk/utils"
 	"sync"
 	"time"
 )
@@ -23,6 +25,8 @@ type DataFunc func(rd *RiskData, args ...interface{}) (res interface{}, tp strin
 
 func init() {
 	registeFunc("dateFormat", FuncTimerFormater)
+	registeFunc("combine", FuncCombine)
+	registeFunc("subStr", FuncSubStr)
 }
 
 func registeFunc(name string, fn DataFunc) {
@@ -60,5 +64,58 @@ func FuncTimerFormater(rd *RiskData, args ...interface{}) (res interface{}, tp s
 
 	timer, _ := time.ParseInLocation("2006-01-02 15:04:05", value, time.Local)
 	res = timer.Format(format)
+	return
+}
+
+// FuncCombine  合并字段
+func FuncCombine(rd *RiskData, args ...interface{}) (res interface{}, tp string, err error) {
+	log.Println("FuncCombine")
+	defer func() {
+		exp := recover()
+		if exp != nil {
+			err = exp.(error)
+		}
+	}()
+
+	var buffer bytes.Buffer
+	var bt []byte
+	var v interface{}
+	for i := 0; i < len(args); i++ {
+		v, _, err = rd.Get(args[i].(string))
+		// log.Printf("k: %v, v: %v, e: %v \n", args[i], v, err)
+		if err != nil {
+			return
+		}
+
+		bt, err = utils.GetBytes(v)
+		if err != nil {
+			return
+		}
+
+		buffer.Write(bt)
+		if i < len(args)-1 {
+			buffer.WriteString(",")
+		}
+	}
+
+	str := buffer.String()
+	// 移除制表符
+	str, _ = utils.PureString(str)
+
+	res = str
+	tp = "string"
+
+	return
+}
+
+// 字符串截取
+func FuncSubStr(rd *RiskData, args ...interface{}) (res interface{}, tp string, err error) {
+	log.Println("FuncSubStr")
+	defer func() {
+		exp := recover()
+		if exp != nil {
+			err = exp.(error)
+		}
+	}()
 	return
 }

@@ -1,6 +1,7 @@
 package dataFormater
 
 import (
+	"risk/utils"
 	"testing"
 )
 
@@ -384,6 +385,12 @@ var DataFormatterConfig string = `
         "args": null
     },
     {
+        "key_name": "channel_name",
+        "func_name": "",
+        "type": "string",
+        "args": null
+    },
+    {
         "key_name": "uid",
         "func_name": "",
         "type": "int",
@@ -394,6 +401,18 @@ var DataFormatterConfig string = `
         "func_name": "dateFormat",
         "type": "string",
         "args": ["create_date", "2006-01-02"]
+    },
+    {
+        "key_name": "combine_uid_hid",
+        "func_name": "combine",
+        "type": "string",
+        "args": ["uid", "hospital_id"]
+    },
+    {
+        "key_name": "sub_channel",
+        "func_name": "subStr",
+        "type": "string",
+        "args": ["channel_name", 0,3]
     }
 ]
 `
@@ -484,6 +503,7 @@ var RawData string = `
 	"province_id": 1,
 	"city_id": 1,
 	"website": "app",
+    "channel_name": "abcdefg hijklmn",
 	"ip2city": "1",
 	"ip2province": "1",
 	"ext_id": "174127",
@@ -547,8 +567,8 @@ func loadCommonRiskData(t *testing.T) (rd RiskData, err error) {
 		t.Error(err)
 	}
 
-	// t.Logf("raw: %#+v \n", RawData)
-
+	RawData, _ = utils.PureString(RawData)
+	t.Logf("raw: %#+v \n", RawData)
 	err = rd.LoadData(RawData)
 	if err != nil {
 		t.Error(err)
@@ -579,7 +599,7 @@ func TestGetData(t *testing.T) {
 func TestFuncData(t *testing.T) {
 	rd, _ := loadCommonRiskData(t)
 
-	k := "format_date"
+	k := "sub_channel"
 	conf, _ := rd.GetConf(k)
 	t.Logf("conf %#+v \n", conf)
 	err := rd.handleDataByConf(conf)
