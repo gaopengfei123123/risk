@@ -1,4 +1,4 @@
-package dataFormater
+package data_formater
 
 import (
 	"risk/utils"

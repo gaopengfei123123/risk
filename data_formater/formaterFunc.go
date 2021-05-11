@@ -1,4 +1,4 @@
-package dataFormater
+package data_formater
 
 /**
 这里是所有的转换函数, 每个函数接参的格式一样, 由函数内部将收到的参数类型进行转换
@@ -110,7 +110,7 @@ func FuncCombine(rd *RiskData, args ...interface{}) (res interface{}, tp string,
 
 // 字符串截取
 func FuncSubStr(rd *RiskData, args ...interface{}) (res interface{}, tp string, err error) {
-	log.Println("FuncSubStr")
+	log.Println("FuncSubStr 未开发")
 	defer func() {
 		exp := recover()
 		if exp != nil {
